@@ -6,3 +6,21 @@
   "ui": "dist/ui.html",
   "editorType": ["figma"]
 }
+
+{
+  "name": "TDS2.0 Design Lint",
+  "id": "1269325174609402558",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": [
+    "figma"
+  ],
+  "ui": "dist/ui.html",
+  "networkAccess": {
+    "allowedDomains": [
+      "none"
+    ]
+  }
+}

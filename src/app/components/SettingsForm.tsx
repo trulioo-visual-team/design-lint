@@ -1,65 +1,61 @@
 import * as React from "react";
 import { useState } from "react";
+import "../styles/panel.css";
 
-function SettingsForm(props) {
-  const [radiusValue, setRadiusValue] = useState("");
+function SettingsForm() {
+  const [selectedOption, setSelectedOption] = useState("default");
 
-  const handleSubmit = event => {
-    event.preventDefault();
-
-    if (radiusValue.length) {
-      parent.postMessage(
-        {
-          pluginMessage: {
-            type: "update-border-radius",
-            radiusValues: radiusValue
-          }
-        },
-        "*"
-      );
-    }
+  const handleOptionChange = event => {
+    setSelectedOption(event.target.value);
+    handleSubmit(event.target.value);
   };
 
-  function handleClear() {
+  const handleSubmit = event => {
     parent.postMessage(
       {
         pluginMessage: {
-          type: "reset-border-radius"
+          type: "update-configuration",
+          configuration: event
         }
       },
       "*"
     );
-  }
+  };
 
   return (
     <div className="settings-row">
       <div className="settings-form" onSubmit={handleSubmit}>
-        <h3 className="settings-title">Border radius</h3>
+        <h3 className="settings-title">Configuration</h3>
         <div className="settings-label">
-          Set your preferred border radius values separated by commas (ex: "2,
-          4, 6, 8").
+          Set your preferred configuration based on product.
         </div>
-
-        <div className="input-icon">
-          <div className="input-icon__icon">
-            <div className="icon icon--corner-radius icon--black-3"></div>
-          </div>
-          <input
-            type="input"
-            className="input-icon__input"
-            value={radiusValue}
-            onChange={e => setRadiusValue(e.target.value)}
-            placeholder={props.borderRadiusValues}
-          />
+        <div className="settings-checkbox-group">
+          <label
+            style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+          >
+            <input
+              name="vectorsRadio"
+              type="radio"
+              value="default"
+              checked={selectedOption === "default"}
+              onChange={handleOptionChange}
+            />
+            Platform
+          </label>
         </div>
-      </div>
-      <div className="form-button-group">
-        <button className="button button--primary" onClick={handleSubmit}>
-          Save
-        </button>
-        <button className="button button--secondary" onClick={handleClear}>
-          Reset
-        </button>
+        <div className="settings-checkbox-group">
+          <label
+            style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+          >
+            <input
+              type="radio"
+              value="docv"
+              checked={selectedOption === "docv"}
+              onChange={handleOptionChange}
+            />
+            DocV Mobile SDK
+          </label>
+        </div>
       </div>
     </div>
   );

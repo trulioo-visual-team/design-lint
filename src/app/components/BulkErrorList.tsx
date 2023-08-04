@@ -5,14 +5,7 @@ import { AnimatePresence, motion } from "framer-motion/dist/framer-motion";
 import PreloaderCSS from "./PreloaderCSS";
 
 function BulkErrorList(props) {
-  const availableFilters = [
-    "All",
-    "text",
-    "fill",
-    "stroke",
-    "radius",
-    "effects"
-  ];
+  const availableFilters = ["All", "text", "fill", "stroke", "effects"];
 
   const ignoredErrorsMap = {};
   props.ignoredErrorArray.forEach(ignoredError => {

@@ -57,7 +57,7 @@ function SettingsPanel(props) {
               to ignore, lock them in the Figma layer list.
             </div>
           </div>
-          <SettingsForm borderRadiusValues={props.borderRadiusValues} />
+          <SettingsForm />
           <div className="settings-row">
             <h3 className="settings-title">Lint Vectors (Default Off)</h3>
             <div className="settings-label">

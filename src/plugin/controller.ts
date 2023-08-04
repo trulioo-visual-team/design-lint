@@ -3,13 +3,15 @@ import {
   checkEffects,
   checkFills,
   checkStrokes,
-  checkType
-  // customCheckTextFills,
-  // uncomment this as an example of a custom lint function ^
+  checkType,
+  customFills // uncomment this as an example of a custom lint function ^
 } from "./lintingFunctions";
 
 figma.showUI(__html__, { width: 360, height: 580 });
 
+// console.log(figma.variables.getLocalVariableCollections());
+
+let configuration = "default";
 let borderRadiusArray = [0, 2, 4, 8, 16, 24, 32];
 let originalNodeTree: readonly any[] = [];
 let lintVectors = false;
@@ -181,31 +183,33 @@ figma.ui.onmessage = msg => {
   }
 
   // For when the user updates the border radius values to lint from the settings menu.
-  if (msg.type === "update-border-radius") {
-    let newString = msg.radiusValues.replace(/\s+/g, "");
-    let newRadiusArray = newString.split(",");
-    newRadiusArray = newRadiusArray
-      .filter(x => x.trim().length && !isNaN(x))
-      .map(Number);
+  if (msg.type === "update-configuration") {
+    configuration = msg.configuration;
 
-    // Most users won't add 0 to the array of border radius so let's add it in for them.
-    if (newRadiusArray.indexOf(0) === -1) {
-      newRadiusArray.unshift(0);
-    }
+    // let newString = msg.radiusValues.replace(/\s+/g, "");
+    // let newRadiusArray = newString.split(",");
+    // newRadiusArray = newRadiusArray
+    //   .filter(x => x.trim().length && !isNaN(x))
+    //   .map(Number);
 
-    // Update the array we pass into checkRadius for linting.
-    borderRadiusArray = newRadiusArray;
+    // // Most users won't add 0 to the array of border radius so let's add it in for them.
+    // if (newRadiusArray.indexOf(0) === -1) {
+    //   newRadiusArray.unshift(0);
+    // }
 
-    // Save this value in client storage.
-    let radiusToBeStored = JSON.stringify(borderRadiusArray);
-    figma.clientStorage.setAsync("storedRadiusValues", radiusToBeStored);
+    // // Update the array we pass into checkRadius for linting.
+    // borderRadiusArray = newRadiusArray;
 
-    figma.ui.postMessage({
-      type: "fetched border radius",
-      storage: JSON.stringify(borderRadiusArray)
-    });
+    // // Save this value in client storage.
+    // let radiusToBeStored = JSON.stringify(borderRadiusArray);
+    // figma.clientStorage.setAsync("storedRadiusValues", radiusToBeStored);
 
-    figma.notify("Saved new border radius values", { timeout: 1000 });
+    // figma.ui.postMessage({
+    //   type: "fetched border radius",
+    //   storage: JSON.stringify(borderRadiusArray)
+    // });
+
+    figma.notify("Saved configuration", { timeout: 1000 });
   }
 
   if (msg.type === "reset-border-radius") {
@@ -466,10 +470,10 @@ figma.ui.onmessage = msg => {
     //   );
     // }
 
-    checkFills(node, errors);
-    checkRadius(node, errors, borderRadiusArray);
-    checkEffects(node, errors);
-    checkStrokes(node, errors);
+    checkFills(node, errors, configuration);
+    // checkRadius(node, errors, borderRadiusArray);
+    checkEffects(node, errors, configuration);
+    checkStrokes(node, errors, configuration);
 
     return errors;
   }
@@ -477,7 +481,7 @@ figma.ui.onmessage = msg => {
   function lintVariantWrapperRules(node) {
     let errors = [];
 
-    checkFills(node, errors);
+    checkFills(node, errors, configuration);
 
     return errors;
   }
@@ -485,8 +489,8 @@ figma.ui.onmessage = msg => {
   function lintLineRules(node) {
     let errors = [];
 
-    checkStrokes(node, errors);
-    checkEffects(node, errors);
+    checkStrokes(node, errors, configuration);
+    checkEffects(node, errors, configuration);
 
     return errors;
   }
@@ -494,10 +498,10 @@ figma.ui.onmessage = msg => {
   function lintFrameRules(node) {
     let errors = [];
 
-    checkFills(node, errors);
-    checkStrokes(node, errors);
-    checkRadius(node, errors, borderRadiusArray);
-    checkEffects(node, errors);
+    checkFills(node, errors, configuration);
+    checkStrokes(node, errors, configuration);
+    // checkRadius(node, errors, borderRadiusArray);
+    checkEffects(node, errors, configuration);
 
     return errors;
   }
@@ -505,10 +509,10 @@ figma.ui.onmessage = msg => {
   function lintSectionRules(node) {
     let errors = [];
 
-    checkFills(node, errors);
+    checkFills(node, errors, configuration);
     // For some reason section strokes aren't accessible via the API yet.
     // checkStrokes(node, errors);
-    checkRadius(node, errors, borderRadiusArray);
+    // checkRadius(node, errors, borderRadiusArray);
 
     return errors;
   }
@@ -516,14 +520,13 @@ figma.ui.onmessage = msg => {
   function lintTextRules(node) {
     let errors = [];
 
-    checkType(node, errors);
-    checkFills(node, errors);
+    checkType(node, errors, configuration);
+    checkFills(node, errors, configuration);
 
     // We could also comment out checkFills and use a custom function instead
     // Take a look at line 122 in lintingFunction.ts for an example.
-    // customCheckTextFills(node, errors);
-    checkEffects(node, errors);
-    checkStrokes(node, errors);
+    checkEffects(node, errors, configuration);
+    checkStrokes(node, errors, configuration);
 
     return errors;
   }
@@ -531,10 +534,10 @@ figma.ui.onmessage = msg => {
   function lintRectangleRules(node) {
     let errors = [];
 
-    checkFills(node, errors);
-    checkRadius(node, errors, borderRadiusArray);
-    checkStrokes(node, errors);
-    checkEffects(node, errors);
+    checkFills(node, errors, configuration);
+    // checkRadius(node, errors, borderRadiusArray);
+    checkStrokes(node, errors, configuration);
+    checkEffects(node, errors, configuration);
 
     return errors;
   }
@@ -544,9 +547,9 @@ figma.ui.onmessage = msg => {
 
     // This can be enabled by the user in settings.
     if (lintVectors === true) {
-      checkFills(node, errors);
-      checkStrokes(node, errors);
-      checkEffects(node, errors);
+      checkFills(node, errors, configuration);
+      checkStrokes(node, errors, configuration);
+      checkEffects(node, errors, configuration);
     }
 
     return errors;
@@ -555,9 +558,9 @@ figma.ui.onmessage = msg => {
   function lintShapeRules(node) {
     let errors = [];
 
-    checkFills(node, errors);
-    checkStrokes(node, errors);
-    checkEffects(node, errors);
+    checkFills(node, errors, configuration);
+    checkStrokes(node, errors, configuration);
+    checkEffects(node, errors, configuration);
 
     return errors;
   }

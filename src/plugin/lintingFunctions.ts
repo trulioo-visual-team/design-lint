@@ -1,3 +1,24 @@
+import theme from "./themeVariables.json";
+
+// Special Objects
+const overlayDefault = {
+  opacity: 0.2,
+  color: {
+    r: 0.07058823853731155,
+    g: 0.07058823853731155,
+    b: 0.07058823853731155
+  }
+};
+
+const overlayDocV = {
+  opacity: 0.5,
+  color: {
+    r: 0,
+    g: 0,
+    b: 0
+  }
+};
+
 // Linting functions
 
 // Generic function for creating an error object to pass to the app.
@@ -53,7 +74,7 @@ export function determineFill(fills) {
 }
 
 // Lint border radius
-export function checkRadius(node, errors, radiusValues) {
+export function checkRadius(node, errors, radiusValues, configuration) {
   let cornerType = node.cornerRadius;
 
   if (typeof cornerType !== "symbol") {
@@ -126,59 +147,8 @@ export function checkRadius(node, errors, radiusValues) {
   }
 }
 
-// Custom Lint rule that isn't being used yet!
-// that ensures our text fills aren't using styles (design tokens) meant for backgrounds.
-export function customCheckTextFills(node, errors) {
-  // Here we create an array of style keys (https://www.figma.com/plugin-docs/api/PaintStyle/#key)
-  // that we want to make sure our text layers aren't using.
-  const fillsToCheck = [
-    "4b93d40f61be15e255e87948a715521c3ae957e6"
-    // To collect style keys, use a plugin like Inspector, or use console commands like figma.getLocalPaintStyles();
-    // in your design system file.
-  ];
-
-  let nodeFillStyle = node.fillStyleId;
-
-  // If there are multiple text styles on a single text layer, we can't lint it
-  // we can return an error instead.
-  if (typeof nodeFillStyle === "symbol") {
-    return errors.push(
-      createErrorObject(
-        node, // Node object we use to reference the error (id, layer name, etc)
-        "fill", // Type of error (fill, text, effect, etc)
-        "Mixing two styles together", // Message we show to the user
-        "Multiple Styles" // Normally we return a hex value here
-      )
-    );
-  }
-
-  // We strip the additional style key characters so we can check
-  // to see if the fill is being used incorrectly.
-  nodeFillStyle = nodeFillStyle.replace("S:", "");
-  nodeFillStyle = nodeFillStyle.split(",")[0];
-
-  // If the node (layer) has a fill style, then check to see if there's an error.
-  if (nodeFillStyle !== "") {
-    // If we find the layer has a fillStyle that matches in the array create an error.
-    if (fillsToCheck.includes(nodeFillStyle)) {
-      return errors.push(
-        createErrorObject(
-          node, // Node object we use to reference the error (id, layer name, etc)
-          "fill", // Type of error (fill, text, effect, etc)
-          "Incorrect text color use", // Message we show to the user
-          "Using a background color on a text layer" // Determines the fill, so we can show a hex value.
-        )
-      );
-    }
-    // If there is no fillStyle on this layer,
-    // check to see why with our default linting function for fills.
-  } else {
-    checkFills(node, errors);
-  }
-}
-
 // Check for effects like shadows, blurs etc.
-export function checkEffects(node, errors) {
+export function checkEffects(node, errors, configuration) {
   if (node.effects.length && node.visible === true) {
     if (node.effectStyleId === "") {
       const effectsArray = [];
@@ -239,11 +209,58 @@ export function checkEffects(node, errors) {
   }
 }
 
-export function checkFills(node, errors) {
-  if (typeof node.boundVariables.fills !== "undefined") {
-    return;
+function overlayCheck(fill, configuration) {
+  if (fill.hasOwnProperty("color")) {
+    if (configuration === "default") {
+      if (
+        fill.opacity.toFixed(1) == 0.2 &&
+        fill.color.b == 0.07058823853731155 &&
+        fill.color.g == 0.07058823853731155 &&
+        fill.color.r == 0.07058823853731155
+      )
+        return true;
+    } else {
+      if (
+        fill.opacity.toFixed(1) == 0.5 &&
+        fill.color.b == 0 &&
+        fill.color.g == 0 &&
+        fill.color.r == 0
+      ) {
+        return true;
+      }
+      if (
+        fill.color.b == 0.2078431397676468 &&
+        fill.color.g == 0.2078431397676468 &&
+        fill.color.r == 0.2078431397676468
+      ) {
+        return true;
+      }
+    }
   }
+  return false;
+}
 
+export function checkFills(node, errors, configuration) {
+  if (typeof node.boundVariables.fills !== "undefined") {
+    let check = true;
+    node.boundVariables.fills.forEach(variable => {
+      if (!theme.theme.includes(variable.id)) {
+        check = false;
+      }
+    });
+    if (check) {
+      return;
+    } else {
+      return errors.push(
+        createErrorObject(
+          node,
+          "fill",
+          "Wrong fill variable",
+          "Replace fill variable"
+        )
+      );
+    }
+  }
   if (
     (node.fills.length && node.visible === true) ||
     typeof node.fills === "symbol"
@@ -251,12 +268,14 @@ export function checkFills(node, errors) {
     let nodeFills = node.fills;
     let fillStyleId = node.fillStyleId;
 
+    // Checks if there is more a mixed value
     if (typeof nodeFills === "symbol") {
       return errors.push(
         createErrorObject(node, "fill", "Missing fill style", "Mixed values")
       );
     }
 
+    // Not sure what this means
     if (typeof fillStyleId === "symbol") {
       return errors.push(
         createErrorObject(node, "fill", "Missing fill style", "Mixed values")
@@ -264,7 +283,6 @@ export function checkFills(node, errors) {
     }
 
     if (
-      node.fillStyleId === "" &&
       node.fills[0].type !== "IMAGE" &&
       node.fills[0].type !== "VIDEO" &&
       node.fills[0].visible === true
@@ -278,13 +296,18 @@ export function checkFills(node, errors) {
           determineFill(node.fills)
         )
       );
+    } else if (
+      node.fills.length &&
+      overlayCheck(node.fills[0], configuration)
+    ) {
+      return;
     } else {
       return;
     }
   }
 }
 
-export function checkStrokes(node, errors) {
+export function checkStrokes(node, errors, configuration) {
   if (node.strokes.length) {
     if (typeof node.boundVariables.strokes !== "undefined") {
       return;
@@ -328,8 +351,12 @@ export function checkStrokes(node, errors) {
   }
 }
 
-export function checkType(node, errors) {
-  if (node.textStyleId === "" && node.visible === true) {
+export function checkType(node, errors, configuration) {
+  if (
+    node.textStyleId === "" &&
+    node.visible === true &&
+    node.fontName.family !== "Font Awesome 6 Pro"
+  ) {
     let textObject = {
       font: "",
       fontStyle: "",
@@ -378,6 +405,41 @@ export function checkType(node, errors) {
     return errors.push(
       createErrorObject(node, "text", "Missing text style", currentStyle)
     );
+  } else if (configuration == "default") {
+    if (typeof node.fontName === "symbol") {
+      return errors.push(
+        createErrorObject(
+          node,
+          "text",
+          "Mixed text style",
+          "Mixed families (potentially can ignore)"
+        )
+      );
+    }
+    if (
+      node.fontName.family != "Libre Franklin" &&
+      node.fontName.family != "Font Awesome 6 Pro"
+    ) {
+      return errors.push(
+        createErrorObject(
+          node,
+          "text",
+          "Invalid text style",
+          node.fontName.family
+        )
+      );
+    }
+  } else if (configuration == "docv") {
+    if (typeof node.fontName === "symbol") {
+      return errors.push(
+        createErrorObject(
+          node,
+          "text",
+          "Mixed text style",
+          "Mixed families (potentially can ignore)"
+        )
+      );
+    }
   } else {
     return;
   }

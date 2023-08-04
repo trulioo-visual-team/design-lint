@@ -130,7 +130,7 @@ Until I have time to write a formal tutorial, I've added a [placeholder linting 
 ```javascript
 // Custom Lint rule that isn't being used yet!
 // that ensures our text fills aren't using styles (design tokens) meant for backgrounds.
-export function customCheckTextFills(node, errors) {
+export function customFills(node, errors) {
   // Here we create an array of style keys (https://www.figma.com/plugin-docs/api/PaintStyle/#key)
   // that we want to make sure our text layers aren't using.
 
