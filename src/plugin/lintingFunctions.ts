@@ -1,23 +1,23 @@
 import theme from "./themeVariables.json";
 
-// Special Objects
-const overlayDefault = {
-  opacity: 0.2,
-  color: {
-    r: 0.07058823853731155,
-    g: 0.07058823853731155,
-    b: 0.07058823853731155
-  }
-};
+// // Special Objects
+// const overlayDefault = {
+//   opacity: 0.2,
+//   color: {
+//     r: 0.07058823853731155,
+//     g: 0.07058823853731155,
+//     b: 0.07058823853731155
+//   }
+// };
 
-const overlayDocV = {
-  opacity: 0.5,
-  color: {
-    r: 0,
-    g: 0,
-    b: 0
-  }
-};
+// const overlayDocV = {
+//   opacity: 0.5,
+//   color: {
+//     r: 0,
+//     g: 0,
+//     b: 0
+//   }
+// };
 
 // Linting functions
 

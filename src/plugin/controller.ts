@@ -3,8 +3,7 @@ import {
   checkEffects,
   checkFills,
   checkStrokes,
-  checkType,
-  customFills // uncomment this as an example of a custom lint function ^
+  checkType // uncomment this as an example of a custom lint function ^
 } from "./lintingFunctions";
 
 figma.showUI(__html__, { width: 360, height: 580 });
@@ -544,7 +543,6 @@ figma.ui.onmessage = msg => {
 
   function lintVectorRules(node) {
     let errors = [];
-
     // This can be enabled by the user in settings.
     if (lintVectors === true) {
       checkFills(node, errors, configuration);
